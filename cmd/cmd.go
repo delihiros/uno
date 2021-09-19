@@ -2,6 +2,9 @@ package cmd
 
 import (
 	"uno/pkg/client"
+	"uno/pkg/discord"
+
+	"github.com/spf13/viper"
 
 	"github.com/spf13/cobra"
 )
@@ -19,6 +22,14 @@ var (
 	rootCmd = &cobra.Command{
 		Use:   "uno",
 		Short: "Unofficial Valorant API client",
+	}
+
+	wardellCmd = &cobra.Command{
+		Use:   "wardell",
+		Short: "wardell joins to your discord server!!!",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return discord.Wardell(viper.Get("discord_token").(string))
+		},
 	}
 
 	accountCmd = &cobra.Command{
@@ -120,6 +131,7 @@ func init() {
 	accountCmd.AddCommand(matchHistoryCmd)
 	accountCmd.AddCommand(mmrCmd)
 
+	rootCmd.AddCommand(wardellCmd)
 	rootCmd.AddCommand(accountCmd)
 	rootCmd.AddCommand(matchCmd)
 }
