@@ -8,6 +8,9 @@ import (
 )
 
 func safeStringInt(m *json.RawMessage) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
 	var i int
 	err := json.Unmarshal(*m, &i)
 	if err != nil {

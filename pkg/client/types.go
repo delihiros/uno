@@ -19,17 +19,10 @@ type Account struct {
 }
 
 type MMRData struct {
-	Name        string `json:"name"`
-	Tag         string `json:"tag"`
-	CurrentData struct {
-		Currenttier          int    `json:"currenttier"`
-		Currenttierpatched   string `json:"currenttierpatched"`
-		RankingInTier        int    `json:"ranking_in_tier"`
-		MmrChangeToLastGame  int    `json:"mmr_change_to_last_game"`
-		Elo                  int    `json:"elo"`
-		GamesNeededForRating int    `json:"games_needed_for_rating"`
-	} `json:"current_data"`
-	BySeason struct {
+	Name        string        `json:"name"`
+	Tag         string        `json:"tag"`
+	CurrentData CurrentSeason `json:"current_data"`
+	BySeason    struct {
 		E3A2 SeasonMMR `json:"e3a2"`
 		E3A1 SeasonMMR `json:"e3a1"`
 		E2A3 SeasonMMR `json:"e2a3"`
@@ -39,6 +32,21 @@ type MMRData struct {
 		E1A2 SeasonMMR `json:"e1a2"`
 		E1A1 SeasonMMR `json:"e1a1"`
 	} `json:"by_season"`
+}
+
+type CurrentSeason struct {
+	Currenttier          int    `json:"currenttier"`
+	Currenttierpatched   string `json:"currenttierpatched"`
+	RankingInTier        int    `json:"ranking_in_tier"`
+	MmrChangeToLastGame  int    `json:"mmr_change_to_last_game"`
+	Elo                  int    `json:"elo"`
+	GamesNeededForRating int    `json:"games_needed_for_rating"`
+}
+
+// TODO: incorrect implementation
+func (s *CurrentSeason) UnmarshalJSON(data []byte) error {
+	var m map[string]*json.RawMessage
+	return json.Unmarshal(data, &m)
 }
 
 type MMRHistory struct {
@@ -175,12 +183,7 @@ type Round struct {
 	PlayerStats []PlayerStatus `json:"player_stats"`
 }
 type PlayerStatus struct {
-	AbilityCasts struct {
-		CCast int `json:"c_cast"`
-		QCast int `json:"q_cast"`
-		ECast int `json:"e_cast"`
-		YCast int `json:"y_cast"`
-	} `json:"ability_casts"`
+	AbilityCasts      AbilityCasts  `json:"ability_casts"`
 	PlayerPuuid       string        `json:"player_puuid"`
 	PlayerDisplayName string        `json:"player_display_name"`
 	PlayerTeam        string        `json:"player_team"`
