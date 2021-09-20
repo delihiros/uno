@@ -3,6 +3,7 @@ package client
 import (
 	"reflect"
 	"testing"
+	"uno/pkg/entities"
 )
 
 func TestClient_GetMatchByID(t *testing.T) {
@@ -42,7 +43,7 @@ func TestClient_GetAccountByNameTag(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    *Account
+		want    *entities.Account
 		wantErr bool
 	}{
 		{
@@ -51,7 +52,7 @@ func TestClient_GetAccountByNameTag(t *testing.T) {
 				name: "bobobobobobobo",
 				tag:  "1212",
 			},
-			want: &Account{
+			want: &entities.Account{
 				Puuid: "1e98d5ed-2c63-5573-a564-110ddef7853f",
 			},
 			wantErr: false,
@@ -81,7 +82,7 @@ func TestClient_GetMMRData(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    *MMRData
+		want    *entities.MMRData
 		wantErr bool
 	}{
 		{
@@ -91,7 +92,7 @@ func TestClient_GetMMRData(t *testing.T) {
 				name:   "bobobobobobobo",
 				tag:    "1212",
 			},
-			want: &MMRData{
+			want: &entities.MMRData{
 				Name: "bobobobobobobo",
 			},
 			wantErr: false,

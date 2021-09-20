@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"uno/pkg/client"
+	"uno/pkg/entities"
 
 	"github.com/thoas/go-funk"
 )
@@ -20,10 +21,10 @@ func main() {
 		log.Println(err)
 	}
 	for i, round := range match.Rounds {
-		myStatus := funk.Filter(round.PlayerStats, func(stat client.PlayerStatus) bool {
+		myStatus := funk.Filter(round.PlayerStats, func(stat entities.PlayerStatus) bool {
 			return stat.PlayerDisplayName == playerDisplayName
-		}).([]client.PlayerStatus)[0]
-		victims := funk.Reduce(myStatus.KillEvents, func(acc []string, event client.KillEvent) []string {
+		}).([]entities.PlayerStatus)[0]
+		victims := funk.Reduce(myStatus.KillEvents, func(acc []string, event entities.KillEvent) []string {
 			acc = append(acc, event.VictimDisplayName)
 			return acc
 		}, []string{}).([]string)

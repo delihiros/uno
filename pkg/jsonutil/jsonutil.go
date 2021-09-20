@@ -1,34 +1,10 @@
-package client
+package jsonutil
 
 import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"strconv"
 )
-
-func safeStringInt(m *json.RawMessage) (int, error) {
-	if m == nil {
-		return 0, nil
-	}
-	var i int
-	err := json.Unmarshal(*m, &i)
-	if err != nil {
-		var s string
-		err = json.Unmarshal(*m, &s)
-		if err != nil {
-			return 0, err
-		}
-		if s == "N.A" {
-			return 0, nil
-		}
-		i, err = strconv.Atoi(s)
-		if err != nil {
-			return 0, err
-		}
-	}
-	return i, nil
-}
 
 func FormatJSON(v interface{}, prettify bool) (string, error) {
 	b, err := json.Marshal(v)

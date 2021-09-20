@@ -10,6 +10,8 @@ import (
 	"syscall"
 	"uno/pkg/analysis/maps"
 	"uno/pkg/client"
+	"uno/pkg/entities"
+	"uno/pkg/jsonutil"
 
 	"github.com/spf13/viper"
 
@@ -114,7 +116,7 @@ func elo(m *discordgo.MessageCreate, cmdSlice []string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return client.FormatJSON(mmr.CurrentData, true)
+	return jsonutil.FormatJSON(mmr.CurrentData, true)
 }
 
 func parseNameTag(nameTag string) (string, string) {
@@ -145,7 +147,7 @@ func history(m *discordgo.MessageCreate, cmdSlice []string) (string, error) {
 	return strings.Join(summarized, "\n"), nil
 }
 
-func summarizeMatch(m *client.Match, name, tag string) (string, error) {
+func summarizeMatch(m *entities.Match, name, tag string) (string, error) {
 	player, err := m.FindPlayer(name, tag)
 	if err != nil {
 		return "", err
@@ -204,7 +206,7 @@ func createKillMap(cmdSlice []string) (string, error) {
 					m.DrawCircle(float64(killerLocation.X), float64(killerLocation.Y), 3, 0, 0, 1)
 					m.DrawLine(float64(victimLocation.X), float64(victimLocation.Y), float64(killerLocation.X), float64(killerLocation.Y), 2, 0, 0.5, 0.5)
 				} else {
-					_, err := client.FormatJSON(event, true)
+					_, err := jsonutil.FormatJSON(event, true)
 					if err != nil {
 						panic(err)
 					}

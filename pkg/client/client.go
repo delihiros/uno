@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"uno/pkg/entities"
 )
 
 const (
@@ -49,7 +50,7 @@ func (c *Client) get(endpoint string, queries map[string]string, v interface{}) 
 	if err != nil {
 		return err
 	}
-	r := &Response{}
+	r := &entities.Response{}
 	err = json.Unmarshal(body, r)
 	if err != nil {
 		return err
@@ -60,8 +61,8 @@ func (c *Client) get(endpoint string, queries map[string]string, v interface{}) 
 	return json.Unmarshal(r.Data, v)
 }
 
-func (c *Client) GetAccountByNameTag(name string, tag string) (*Account, error) {
-	account := &Account{}
+func (c *Client) GetAccountByNameTag(name string, tag string) (*entities.Account, error) {
+	account := &entities.Account{}
 	err := c.get("/valorant/v1/account/"+name+"/"+tag, map[string]string{}, account)
 	if err != nil {
 		return nil, err
@@ -69,8 +70,8 @@ func (c *Client) GetAccountByNameTag(name string, tag string) (*Account, error) 
 	return account, nil
 }
 
-func (c *Client) GetMMRDataByNameTag(region string, name string, tag string) (*MMRData, error) {
-	mmrData := &MMRData{}
+func (c *Client) GetMMRDataByNameTag(region string, name string, tag string) (*entities.MMRData, error) {
+	mmrData := &entities.MMRData{}
 	err := c.get("/valorant/v2/mmr/"+region+"/"+name+"/"+tag, map[string]string{}, mmrData)
 	if err != nil {
 		return nil, err
@@ -78,8 +79,8 @@ func (c *Client) GetMMRDataByNameTag(region string, name string, tag string) (*M
 	return mmrData, nil
 }
 
-func (c *Client) GetMMRHistory(region string, name string, tag string) ([]*MMRHistory, error) {
-	history := []*MMRHistory{}
+func (c *Client) GetMMRHistory(region string, name string, tag string) ([]*entities.MMRHistory, error) {
+	history := []*entities.MMRHistory{}
 	err := c.get("/valorant/v1/mmr-history/"+region+"/"+name+"/"+tag, map[string]string{}, &history)
 	if err != nil {
 		return nil, err
@@ -87,8 +88,8 @@ func (c *Client) GetMMRHistory(region string, name string, tag string) ([]*MMRHi
 	return history, nil
 }
 
-func (c *Client) GetMatchByID(matchID string) (*Match, error) {
-	match := &Match{}
+func (c *Client) GetMatchByID(matchID string) (*entities.Match, error) {
+	match := &entities.Match{}
 	err := c.get("/valorant/v2/match/"+matchID, map[string]string{}, match)
 	if err != nil {
 		return nil, err
@@ -96,8 +97,8 @@ func (c *Client) GetMatchByID(matchID string) (*Match, error) {
 	return match, nil
 }
 
-func (c *Client) GetMatchHistory(region string, name string, tag string, filter string) ([]*Match, error) {
-	matches := []*Match{}
+func (c *Client) GetMatchHistory(region string, name string, tag string, filter string) ([]*entities.Match, error) {
+	matches := []*entities.Match{}
 	queries := map[string]string{}
 	if filter != "" {
 		queries["filter"] = filter
@@ -109,8 +110,8 @@ func (c *Client) GetMatchHistory(region string, name string, tag string, filter 
 	return matches, nil
 }
 
-func (c *Client) GetContent() (*Content, error) {
-	content := &Content{}
+func (c *Client) GetContent() (*entities.Content, error) {
+	content := &entities.Content{}
 	body, err := c.simpleGet("/valorant/v1/content", map[string]string{})
 	if err != nil {
 		return nil, err

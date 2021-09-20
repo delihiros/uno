@@ -3,6 +3,7 @@ package cmd
 import (
 	"uno/pkg/client"
 	"uno/pkg/discord"
+	"uno/pkg/jsonutil"
 
 	"github.com/spf13/viper"
 
@@ -47,7 +48,7 @@ var (
 			if err != nil {
 				return err
 			}
-			return client.PrintJSON(account, Prettify)
+			return jsonutil.PrintJSON(account, Prettify)
 		},
 	}
 
@@ -64,7 +65,7 @@ var (
 			if err != nil {
 				return err
 			}
-			return client.PrintJSON(mmr, Prettify)
+			return jsonutil.PrintJSON(mmr, Prettify)
 		},
 	}
 
@@ -77,7 +78,7 @@ var (
 			if err != nil {
 				return err
 			}
-			return client.PrintJSON(history, Prettify)
+			return jsonutil.PrintJSON(history, Prettify)
 		},
 	}
 
@@ -90,7 +91,7 @@ var (
 			if err != nil {
 				return err
 			}
-			return client.PrintJSON(matches, Prettify)
+			return jsonutil.PrintJSON(matches, Prettify)
 		},
 	}
 
@@ -103,7 +104,7 @@ var (
 			if err != nil {
 				return err
 			}
-			return client.PrintJSON(match, Prettify)
+			return jsonutil.PrintJSON(match, Prettify)
 		},
 	}
 )

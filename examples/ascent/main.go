@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"uno/pkg/analysis/maps"
+	"uno/pkg/jsonutil"
 
 	"uno/pkg/client"
 )
@@ -24,7 +25,7 @@ func main() {
 					ascent.DrawCircle(float64(killerLocation.X), float64(killerLocation.Y), 3, 0, 0, 1)
 					ascent.DrawLine(float64(victimLocation.X), float64(victimLocation.Y), float64(killerLocation.X), float64(killerLocation.Y), 2, 0, 0.5, 0.5)
 				} else {
-					s, err := client.FormatJSON(event, true)
+					s, err := jsonutil.FormatJSON(event, true)
 					if err != nil {
 						panic(err)
 					}
