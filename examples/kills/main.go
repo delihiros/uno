@@ -16,7 +16,7 @@ const (
 )
 
 func main() {
-	c := client.New()
+	c := client.NewHenrikdevClient()
 	match, err := c.GetMatchByID(matchID)
 	if err != nil {
 		log.Println(err)

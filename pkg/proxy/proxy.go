@@ -59,3 +59,22 @@ func (p *Proxy) GetMatchHistory(region string, name string, tag string, filter s
 	}
 	return matches, nil
 }
+
+func (p *Proxy) GetWeapon(uuid string) (*entities.Weapon, error) {
+	weapon, err := p.db.Weapon(uuid)
+	if err != nil {
+		ws, err := p.Client.GetWeapons()
+		if err != nil {
+			return nil, err
+		}
+		for _, w := range ws {
+			err = p.db.SetWeapon(w)
+			if err != nil {
+				return nil, err
+			}
+		}
+		return p.db.Weapon(uuid)
+	} else {
+		return weapon, nil
+	}
+}

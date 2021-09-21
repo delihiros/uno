@@ -47,7 +47,7 @@ var (
 		Use:   "info",
 		Short: "get account information by player name and tagline",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c := client.New()
+			c := client.NewHenrikdevClient()
 			account, err := c.GetAccountByNameTag(Name, Tag)
 			if err != nil {
 				return err
@@ -64,7 +64,7 @@ var (
 		Use:   "season",
 		Short: "get season level account elo by player name and tagline",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c := client.New()
+			c := client.NewHenrikdevClient()
 			mmr, err := c.GetMMRDataByNameTag(Region, Name, Tag)
 			if err != nil {
 				return err
@@ -77,7 +77,7 @@ var (
 		Use:   "latest",
 		Short: "get latest account elo by player name and tagline",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c := client.New()
+			c := client.NewHenrikdevClient()
 			history, err := c.GetMMRHistoryByNameTag(Region, Name, Tag)
 			if err != nil {
 				return err
@@ -90,7 +90,7 @@ var (
 		Use:   "matches",
 		Short: "get match history",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c := client.New()
+			c := client.NewHenrikdevClient()
 			matches, err := c.GetMatchHistory(Region, Name, Tag, Filter)
 			if err != nil {
 				return err
@@ -103,7 +103,7 @@ var (
 		Use:   "match",
 		Short: "get match information by match ID",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c := client.New()
+			c := client.NewHenrikdevClient()
 			match, err := c.GetMatchByID(MatchID)
 			if err != nil {
 				return err

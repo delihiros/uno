@@ -26,7 +26,7 @@ func TestClient_GetMatchByID(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := New()
+			c := NewHenrikdevClient()
 			_, err := c.GetMatchByID(tt.args.matchID)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetMatchByID() error = %v, wantErr %v", err, tt.wantErr)
@@ -61,7 +61,7 @@ func TestClient_GetAccountByNameTag(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := New()
+			c := NewHenrikdevClient()
 			got, err := c.GetAccountByNameTag(tt.args.name, tt.args.tag)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetAccountByNameTag() error = %v, wantErr %v", err, tt.wantErr)
@@ -101,7 +101,7 @@ func TestClient_GetMMRDataByNameTag(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := New()
+			c := NewHenrikdevClient()
 			got, err := c.GetMMRDataByNameTag(tt.args.region, tt.args.name, tt.args.tag)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetMMRDataByNameTag() error = %v, wantErr %v", err, tt.wantErr)
@@ -137,7 +137,7 @@ func TestClient_GetMMRHistory(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := New()
+			c := NewHenrikdevClient()
 			_, err := c.GetMMRHistoryByNameTag(tt.args.region, tt.args.name, tt.args.tag)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetMMRHistoryByNameTag() error = %v, wantErr %v", err, tt.wantErr)
@@ -172,7 +172,7 @@ func TestClient_GetMatchHistory(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := New()
+			c := NewHenrikdevClient()
 			_, err := c.GetMatchHistory(tt.args.region, tt.args.name, tt.args.tag, tt.args.filter)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetMatchHistory() error = %v, wantErr %v", err, tt.wantErr)
@@ -194,7 +194,7 @@ func TestClient_GetContent(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := New()
+			c := NewHenrikdevClient()
 			_, err := c.GetContent()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetContent() error = %v, wantErr %v", err, tt.wantErr)
@@ -223,7 +223,7 @@ func TestClient_GetLeaderboard(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := New()
+			c := NewHenrikdevClient()
 			_, err := c.GetLeaderboard(tt.args.region)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetLeaderboard() error = %v, wantErr %v", err, tt.wantErr)

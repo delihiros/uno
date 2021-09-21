@@ -15,22 +15,26 @@ var (
 	databaseDirectory = "_databases"
 	matchDirectory    = filepath.FromSlash(databaseDirectory + "/matches")
 	contentDirectory  = filepath.FromSlash(databaseDirectory + "/content")
+	weaponDirectory   = filepath.FromSlash(databaseDirectory + "/weapons")
 )
 
 type Database struct {
 	match   *badger.DB
 	content *badger.DB
+	weapon  *badger.DB
 }
 
 func New() (*Database, error) {
 	match, err := badger.Open(badger.DefaultOptions(matchDirectory))
 	content, err := badger.Open(badger.DefaultOptions(contentDirectory))
+	weapon, err := badger.Open(badger.DefaultOptions(weaponDirectory))
 	if err != nil {
 		return nil, err
 	}
 	return &Database{
 		match:   match,
 		content: content,
+		weapon:  weapon,
 	}, nil
 }
 
@@ -162,4 +166,65 @@ func DecodeContent(bs []byte) (*entities.Content, error) {
 		return nil, err
 	}
 	return &c, nil
+}
+
+func (db *Database) SetWeapon(w *entities.Weapon) error {
+	id := []byte(w.UUID)
+	bs, err := EncodeWeapon(w)
+	if err != nil {
+		return err
+	}
+	return db.weapon.Update(func(txn *badger.Txn) error {
+		return txn.Set(id, bs)
+	})
+}
+
+func (db *Database) Weapon(uuid string) (*entities.Weapon, error) {
+	if uuid == "Ultimate" || uuid == "Ability1" || uuid == "Ability2" {
+		return &entities.Weapon{
+			UUID:        uuid,
+			DisplayName: uuid,
+		}, nil
+	}
+	if uuid == "" {
+		return &entities.Weapon{
+			UUID:        "Spike",
+			DisplayName: "Spike",
+		}, nil
+	}
+	id := []byte(uuid)
+	var bs []byte
+	err := db.weapon.View(func(txn *badger.Txn) error {
+		item, err := txn.Get(id)
+		if err != nil {
+			return err
+		}
+		return item.Value(func(val []byte) error {
+			bs = append([]byte{}, val...)
+			return nil
+		})
+	})
+	if err != nil {
+		return nil, err
+	}
+	return DecodeWeapon(bs)
+}
+
+func EncodeWeapon(w *entities.Weapon) ([]byte, error) {
+	buffer := bytes.NewBuffer(nil)
+	err := gob.NewEncoder(buffer).Encode(w)
+	if err != nil {
+		return nil, err
+	}
+	return buffer.Bytes(), nil
+}
+
+func DecodeWeapon(bs []byte) (*entities.Weapon, error) {
+	var w entities.Weapon
+	buffer := bytes.NewBuffer(bs)
+	err := gob.NewDecoder(buffer).Decode(&w)
+	if err != nil {
+		return nil, err
+	}
+	return &w, nil
 }

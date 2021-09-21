@@ -11,7 +11,7 @@ import (
 
 func main() {
 	ascent := maps.NewAscent()
-	c := client.New()
+	c := client.NewHenrikdevClient()
 	match, err := c.GetMatchByID("3ea94c2f-3781-42cc-8862-b631c6756692")
 	if err != nil {
 		panic(err)
