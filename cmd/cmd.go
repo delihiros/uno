@@ -29,7 +29,11 @@ var (
 		Use:   "wardell",
 		Short: "wardell joins to your discord server!!!",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return discord.Wardell(viper.Get("discord_token").(string))
+			wardell, err := discord.New(viper.Get("discord_token").(string))
+			if err != nil {
+				return err
+			}
+			return wardell.Execute()
 		},
 	}
 
@@ -74,7 +78,7 @@ var (
 		Short: "get latest account elo by player name and tagline",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c := client.New()
-			history, err := c.GetMMRHistory(Region, Name, Tag)
+			history, err := c.GetMMRHistoryByNameTag(Region, Name, Tag)
 			if err != nil {
 				return err
 			}

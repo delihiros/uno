@@ -1,4 +1,5 @@
 _build/*
 _temporary/*
+_databases/*
 .idea/*
 uno.yaml

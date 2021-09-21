@@ -79,9 +79,27 @@ func (c *Client) GetMMRDataByNameTag(region string, name string, tag string) (*e
 	return mmrData, nil
 }
 
-func (c *Client) GetMMRHistory(region string, name string, tag string) ([]*entities.MMRHistory, error) {
+func (c *Client) GetMMRDataByPUUID(region string, puuid string) (*entities.MMRData, error) {
+	mmrData := &entities.MMRData{}
+	err := c.get("/valorant/v2/by-puuid/mmr/"+region+"/"+puuid, map[string]string{}, mmrData)
+	if err != nil {
+		return nil, err
+	}
+	return mmrData, nil
+}
+
+func (c *Client) GetMMRHistoryByNameTag(region string, name string, tag string) ([]*entities.MMRHistory, error) {
 	history := []*entities.MMRHistory{}
 	err := c.get("/valorant/v1/mmr-history/"+region+"/"+name+"/"+tag, map[string]string{}, &history)
+	if err != nil {
+		return nil, err
+	}
+	return history, nil
+}
+
+func (c *Client) GetMMRHistoryByPUUID(region string, puuid string) ([]*entities.MMRHistory, error) {
+	history := []*entities.MMRHistory{}
+	err := c.get("/valorant/v1/by-puuid/mmr-history/"+region+"/"+puuid, map[string]string{}, &history)
 	if err != nil {
 		return nil, err
 	}
@@ -110,6 +128,19 @@ func (c *Client) GetMatchHistory(region string, name string, tag string, filter 
 	return matches, nil
 }
 
+func (c *Client) GetMatchHistoryByPUUID(region string, puuid string, filter string) ([]*entities.Match, error) {
+	matches := []*entities.Match{}
+	queries := map[string]string{}
+	if filter != "" {
+		queries["filter"] = filter
+	}
+	err := c.get("/valorant/v3/by-puuid/matches/"+region+"/"+puuid, queries, &matches)
+	if err != nil {
+		return nil, err
+	}
+	return matches, nil
+}
+
 func (c *Client) GetContent() (*entities.Content, error) {
 	content := &entities.Content{}
 	body, err := c.simpleGet("/valorant/v1/content", map[string]string{})
@@ -121,4 +152,17 @@ func (c *Client) GetContent() (*entities.Content, error) {
 		return nil, err
 	}
 	return content, nil
+}
+
+func (c *Client) GetLeaderboard(region string) ([]*entities.LeaderboardPlayer, error) {
+	players := []*entities.LeaderboardPlayer{}
+	body, err := c.simpleGet("/valorant/v1/leaderboard/"+region, map[string]string{})
+	if err != nil {
+		return nil, err
+	}
+	err = json.Unmarshal(body, &players)
+	if err != nil {
+		return nil, err
+	}
+	return players, nil
 }

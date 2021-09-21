@@ -1,6 +1,8 @@
 package entities
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type Match struct {
 	Metadata struct {
@@ -30,6 +32,15 @@ type Match struct {
 func (m *Match) FindPlayer(name, tag string) (*Player, error) {
 	for _, player := range m.Players.AllPlayers {
 		if player.Name == name && player.Tag == tag {
+			return &player, nil
+		}
+	}
+	return nil, fmt.Errorf("could not find player")
+}
+
+func (m *Match) FindPlayerByPUUID(puuid string) (*Player, error) {
+	for _, player := range m.Players.AllPlayers {
+		if player.Puuid == puuid {
 			return &player, nil
 		}
 	}

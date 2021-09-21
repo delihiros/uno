@@ -73,7 +73,7 @@ func TestClient_GetAccountByNameTag(t *testing.T) {
 	}
 }
 
-func TestClient_GetMMRData(t *testing.T) {
+func TestClient_GetMMRDataByNameTag(t *testing.T) {
 	type args struct {
 		region string
 		name   string
@@ -137,9 +137,9 @@ func TestClient_GetMMRHistory(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := New()
-			_, err := c.GetMMRHistory(tt.args.region, tt.args.name, tt.args.tag)
+			_, err := c.GetMMRHistoryByNameTag(tt.args.region, tt.args.name, tt.args.tag)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("GetMMRHistory() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("GetMMRHistoryByNameTag() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 		})
@@ -198,6 +198,34 @@ func TestClient_GetContent(t *testing.T) {
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetContent() error = %v, wantErr %v", err, tt.wantErr)
 				return
+			}
+		})
+	}
+}
+
+func TestClient_GetLeaderboard(t *testing.T) {
+	type args struct {
+		region string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "success",
+			args: args{
+				region: "ap",
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := New()
+			_, err := c.GetLeaderboard(tt.args.region)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("GetLeaderboard() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}

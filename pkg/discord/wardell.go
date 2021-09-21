@@ -9,9 +9,9 @@ import (
 	"strings"
 	"syscall"
 	"uno/pkg/analysis/maps"
-	"uno/pkg/client"
 	"uno/pkg/entities"
 	"uno/pkg/jsonutil"
+	"uno/pkg/proxy"
 
 	"github.com/spf13/viper"
 
@@ -26,65 +26,94 @@ supporting cmd:
   killmap matchID`
 )
 
-func Wardell(token string) error {
+type Wardell struct {
+	matcher *regexp.Regexp
+	p       *proxy.Proxy
+	s       *discordgo.Session
+}
+
+func New(token string) (*Wardell, error) {
+	p, err := proxy.New()
+	if err != nil {
+		return nil, err
+	}
 	dg, err := discordgo.New("Bot " + token)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	dg.AddHandler(messageCreate)
-	dg.Identify.Intents = discordgo.IntentsGuildMessages
+	return &Wardell{
+		matcher: regexp.MustCompile(viper.Get("discord_mension_string").(string)),
+		p:       p,
+		s:       dg,
+	}, nil
+}
 
-	err = dg.Open()
+func (w *Wardell) Execute() error {
+	w.s.AddHandler(w.messageCreate)
+	w.s.Identify.Intents = discordgo.IntentsGuildMessages
+	err := w.s.Open()
 	if err != nil {
 		log.Println("error opening connection,", err)
 		return err
 	}
-
 	log.Println("Wardell is shouting.  Press CTRL-C to exit.")
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
 	<-sc
-
-	dg.Close()
+	w.s.Close()
 	return nil
 }
 
-func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
-	if m.Author.ID == s.State.User.ID {
+func (w *Wardell) messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
+	if m.Author.ID == w.s.State.User.ID {
 		return
 	}
-	wardellMatch := regexp.MustCompile(viper.Get("discord_mension_string").(string))
-	if wardellMatch.MatchString(m.Content) {
-		cmdString := m.Content[wardellMatch.FindStringIndex(m.Content)[1]:]
+	if w.matcher.MatchString(m.Content) {
+		cmdString := m.Content[w.matcher.FindStringIndex(m.Content)[1]:]
 		cmdString = strings.TrimSpace(cmdString)
 		cmdSlice := strings.Split(cmdString, " ")
 		switch cmdSlice[0] {
 		case "help":
-			_, err := s.ChannelMessageSend(m.ChannelID, usageText)
+			_, err := w.s.ChannelMessageSend(m.ChannelID, usageText)
 			if err != nil {
 				log.Println(m, err)
 			}
 		case "elo":
-			message, err := elo(m, cmdSlice)
+			if len(cmdSlice) < 2 {
+				w.s.ChannelMessageSend(m.ChannelID, usageText)
+				return
+			}
+			name, tag := parseNameTag(cmdSlice[1])
+			message, err := w.elo(name, tag)
 			if err != nil {
 				log.Println(cmdSlice, err)
 			}
-			_, err = s.ChannelMessageSend(m.ChannelID, message)
+			_, err = w.s.ChannelMessageSend(m.ChannelID, message)
 			if err != nil {
 				log.Println(message, err)
 			}
 		case "history":
-			message, err := history(m, cmdSlice)
+			if len(cmdSlice) < 2 {
+				w.s.ChannelMessageSend(m.ChannelID, usageText)
+				return
+			}
+			name, tag := parseNameTag(cmdSlice[1])
+			message, err := w.history(name, tag)
 			if err != nil {
 				log.Println(cmdSlice, err)
 			}
-			_, err = s.ChannelMessageSend(m.ChannelID, message)
+			_, err = w.s.ChannelMessageSend(m.ChannelID, message)
 			if err != nil {
 				log.Println(message, err)
 			}
 		case "killmap":
 			log.Println("killmap of", cmdSlice)
-			filename, err := createKillMap(cmdSlice)
+			if len(cmdSlice) < 2 {
+				w.s.ChannelMessageSend(m.ChannelID, usageText)
+				return
+			}
+			matchID := cmdSlice[1]
+			filename, err := w.createKillMap(matchID)
 			if err != nil {
 				log.Println(cmdSlice, err)
 			}
@@ -92,12 +121,12 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			if err != nil {
 				log.Println(cmdSlice, err)
 			}
-			_, err = s.ChannelFileSend(m.ChannelID, cmdSlice[1]+".png", f)
+			_, err = w.s.ChannelFileSend(m.ChannelID, cmdSlice[1]+".png", f)
 			if err != nil {
 				log.Println(cmdSlice, err)
 			}
 		default:
-			_, err := s.ChannelMessageSend(m.ChannelID, usageText)
+			_, err := w.s.ChannelMessageSend(m.ChannelID, usageText)
 			if err != nil {
 				log.Println(m, err)
 			}
@@ -105,14 +134,9 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 }
 
-func elo(m *discordgo.MessageCreate, cmdSlice []string) (string, error) {
-	if len(cmdSlice) < 2 {
-		return "", fmt.Errorf("not enough argument: %v", cmdSlice)
-	}
-	name, tag := parseNameTag(cmdSlice[1])
+func (w *Wardell) elo(name, tag string) (string, error) {
 	log.Println("Elo of", name, tag)
-	c := client.New()
-	mmr, err := c.GetMMRDataByNameTag("ap", name, tag)
+	mmr, err := w.p.GetMMRDataByNameTag("ap", name, tag)
 	if err != nil {
 		return "", err
 	}
@@ -124,15 +148,10 @@ func parseNameTag(nameTag string) (string, string) {
 	return s[0], s[1]
 }
 
-func history(m *discordgo.MessageCreate, cmdSlice []string) (string, error) {
-	if len(cmdSlice) < 2 {
-		return "", fmt.Errorf("not enough argument: %v", cmdSlice)
-	}
-	name, tag := parseNameTag(cmdSlice[1])
+func (w *Wardell) history(name, tag string) (string, error) {
 	log.Println("History of", name+"#"+tag)
-	c := client.New()
-	// history, err := c.GetMatchHistory("ap", name, tag, "competitive")
-	history, err := c.GetMatchHistory("ap", name, tag, "")
+	// history, err := w.p.GetMatchHistory("ap", name, tag, "competitive")
+	history, err := w.p.GetMatchHistory("ap", name, tag, "")
 	if err != nil {
 		return "", err
 	}
@@ -166,13 +185,8 @@ func summarizeMatch(m *entities.Match, name, tag string) (string, error) {
 	}, " "), nil
 }
 
-func createKillMap(cmdSlice []string) (string, error) {
-	if len(cmdSlice) < 2 {
-		return "", fmt.Errorf("matchID not included")
-	}
-	matchID := cmdSlice[1]
-	c := client.New()
-	match, err := c.GetMatchByID(matchID)
+func (w *Wardell) createKillMap(matchID string) (string, error) {
+	match, err := w.p.GetMatchByID(matchID)
 	if err != nil {
 		return "something went wrong", err
 	}
