@@ -1,8 +1,8 @@
 package main
 
 import (
-	"uno/pkg/jsonutil"
-	"uno/pkg/proxy"
+	"github.com/delihiros/uno/pkg/jsonutil"
+	"github.com/delihiros/uno/pkg/proxy"
 )
 
 var (

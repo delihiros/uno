@@ -5,7 +5,8 @@ import (
 	"encoding/gob"
 	"path/filepath"
 	"time"
-	"uno/pkg/entities"
+
+	"github.com/delihiros/uno/pkg/entities"
 
 	"github.com/dgraph-io/badger/v3"
 )

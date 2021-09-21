@@ -1,9 +1,9 @@
 package cmd
 
 import (
-	"uno/pkg/client"
-	"uno/pkg/discord"
-	"uno/pkg/jsonutil"
+	"github.com/delihiros/uno/pkg/client"
+	"github.com/delihiros/uno/pkg/discord"
+	"github.com/delihiros/uno/pkg/jsonutil"
 
 	"github.com/spf13/viper"
 

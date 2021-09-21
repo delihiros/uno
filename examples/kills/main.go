@@ -3,8 +3,9 @@ package main
 import (
 	"fmt"
 	"log"
-	"uno/pkg/client"
-	"uno/pkg/entities"
+
+	"github.com/delihiros/uno/pkg/client"
+	"github.com/delihiros/uno/pkg/entities"
 
 	"github.com/thoas/go-funk"
 )

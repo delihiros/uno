@@ -1,9 +1,9 @@
 package proxy
 
 import (
-	"uno/pkg/client"
-	"uno/pkg/database"
-	"uno/pkg/entities"
+	"github.com/delihiros/uno/pkg/client"
+	"github.com/delihiros/uno/pkg/database"
+	"github.com/delihiros/uno/pkg/entities"
 )
 
 type Proxy struct {

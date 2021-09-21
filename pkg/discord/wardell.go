@@ -8,10 +8,11 @@ import (
 	"regexp"
 	"strings"
 	"syscall"
-	"uno/pkg/analysis/maps"
-	"uno/pkg/entities"
-	"uno/pkg/jsonutil"
-	"uno/pkg/proxy"
+
+	"github.com/delihiros/uno/pkg/analysis/maps"
+	"github.com/delihiros/uno/pkg/entities"
+	"github.com/delihiros/uno/pkg/jsonutil"
+	"github.com/delihiros/uno/pkg/proxy"
 
 	"github.com/spf13/viper"
 

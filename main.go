@@ -2,7 +2,8 @@ package main
 
 import (
 	"fmt"
-	"uno/cmd"
+
+	"github.com/delihiros/uno/cmd"
 
 	"github.com/spf13/viper"
 )

@@ -6,7 +6,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"uno/pkg/entities"
+
+	"github.com/delihiros/uno/pkg/entities"
 )
 
 const (

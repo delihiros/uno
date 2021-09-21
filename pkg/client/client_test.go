@@ -3,7 +3,8 @@ package client
 import (
 	"reflect"
 	"testing"
-	"uno/pkg/entities"
+
+	"github.com/delihiros/uno/pkg/entities"
 )
 
 func TestClient_GetMatchByID(t *testing.T) {

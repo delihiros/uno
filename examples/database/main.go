@@ -1,8 +1,8 @@
 package main
 
 import (
-	"uno/pkg/database"
-	"uno/pkg/jsonutil"
+	"github.com/delihiros/uno/pkg/database"
+	"github.com/delihiros/uno/pkg/jsonutil"
 )
 
 func main() {

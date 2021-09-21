@@ -2,10 +2,11 @@ package main
 
 import (
 	"log"
-	"uno/pkg/analysis/maps"
-	"uno/pkg/jsonutil"
 
-	"uno/pkg/client"
+	"github.com/delihiros/uno/pkg/analysis/maps"
+	"github.com/delihiros/uno/pkg/jsonutil"
+
+	"github.com/delihiros/uno/pkg/client"
 )
 
 func main() {
