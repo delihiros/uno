@@ -26,7 +26,13 @@ type Database struct {
 
 func New() (*Database, error) {
 	match, err := badger.Open(badger.DefaultOptions(matchDirectory))
+	if err != nil {
+		return nil, err
+	}
 	content, err := badger.Open(badger.DefaultOptions(contentDirectory))
+	if err != nil {
+		return nil, err
+	}
 	weapon, err := badger.Open(badger.DefaultOptions(weaponDirectory))
 	if err != nil {
 		return nil, err

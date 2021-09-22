@@ -9,7 +9,8 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/delihiros/uno/pkg/analysis/maps"
+	"github.com/delihiros/uno/pkg/view"
+
 	"github.com/delihiros/uno/pkg/entities"
 	"github.com/delihiros/uno/pkg/jsonutil"
 	"github.com/delihiros/uno/pkg/proxy"
@@ -191,35 +192,37 @@ func (w *Wardell) createKillMap(matchID string) (string, error) {
 	if err != nil {
 		return "something went wrong", err
 	}
-	var m *maps.Map
+	var m *entities.Map
 	switch match.Metadata.Map {
 	case "Ascent":
-		m = maps.NewAscent()
+		m = entities.NewAscent()
 	case "Haven":
-		m = maps.NewHaven()
+		m = entities.NewHaven()
 	case "Split":
-		m = maps.NewSplit()
+		m = entities.NewSplit()
 	case "Breeze":
-		m = maps.NewBreeze()
+		m = entities.NewBreeze()
 	case "Bind":
-		m = maps.NewBind()
+		m = entities.NewBind()
 	case "Icebox":
-		m = maps.NewIcebox()
+		m = entities.NewIcebox()
 	case "Fracture":
-		m = maps.NewFracture()
+		m = entities.NewFracture()
 	default:
 		return "not supported!", fmt.Errorf("map not supported")
 	}
+	visualizer := view.NewMapVisualizer(m)
+
 	for _, round := range match.Rounds {
 		for _, status := range round.PlayerStats {
 			for _, event := range status.KillEvents {
 				victimLocation := event.VictimDeathLocation
 				killerLocation := event.FindKillerLocation()
-				m.DrawCircle(float64(victimLocation.X), float64(victimLocation.Y), 3, 1, 0, 0)
+				visualizer.DrawCircle(float64(victimLocation.X), float64(victimLocation.Y), 3, 1, 0, 0)
 				// will be nil in DeathMatch
 				if killerLocation != nil {
-					m.DrawCircle(float64(killerLocation.X), float64(killerLocation.Y), 3, 0, 0, 1)
-					m.DrawLine(float64(victimLocation.X), float64(victimLocation.Y), float64(killerLocation.X), float64(killerLocation.Y), 2, 0, 0.5, 0.5)
+					visualizer.DrawCircle(float64(killerLocation.X), float64(killerLocation.Y), 3, 0, 0, 1)
+					visualizer.DrawLine(float64(victimLocation.X), float64(victimLocation.Y), float64(killerLocation.X), float64(killerLocation.Y), 2, 0, 0.5, 0.5)
 				} else {
 					_, err := jsonutil.FormatJSON(event, true)
 					if err != nil {
@@ -230,6 +233,6 @@ func (w *Wardell) createKillMap(matchID string) (string, error) {
 		}
 	}
 	// TODO
-	m.SaveImage("_temporary/death.png")
+	visualizer.SaveImage("_temporary/death.png")
 	return "_temporary/death.png", nil
 }
