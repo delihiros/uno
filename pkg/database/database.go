@@ -56,17 +56,19 @@ func (db *Database) SetMatch(m *entities.Match) error {
 }
 
 func (db *Database) ListMatch() ([]*entities.Match, error) {
-	var bss [][]byte
+	var ms []*entities.Match
 	err := db.match.View(func(txn *badger.Txn) error {
 		opts := badger.DefaultIteratorOptions
 		it := txn.NewIterator(opts)
 		defer it.Close()
-		var bs []byte
 		for it.Rewind(); it.Valid(); it.Next() {
 			item := it.Item()
-			return item.Value(func(val []byte) error {
-				bs = append([]byte{}, val...)
-				bss = append(bss, bs)
+			item.Value(func(val []byte) error {
+				m, err := DecodeMatch(val)
+				if err != nil {
+					return err
+				}
+				ms = append(ms, m)
 				return nil
 			})
 		}
@@ -74,14 +76,6 @@ func (db *Database) ListMatch() ([]*entities.Match, error) {
 	})
 	if err != nil {
 		return nil, err
-	}
-	var ms []*entities.Match
-	for _, bs := range bss {
-		m, err := DecodeMatch(bs)
-		if err != nil {
-			return nil, err
-		}
-		ms = append(ms, m)
 	}
 	return ms, nil
 }

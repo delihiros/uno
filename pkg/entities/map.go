@@ -1,5 +1,7 @@
 package entities
 
+import "fmt"
+
 type Map struct {
 	Name         string
 	ImageURL     string
@@ -13,9 +15,30 @@ type Map struct {
 	height       int
 }
 
-func (m *Map) Scale(width, height int, rx, ry float64) (float64, float64) {
-	x := rx*m.xMultiplier + m.xScalarToAdd + m.xAdjust
-	y := 1 - (ry*m.yMultiplier + m.yScalarToAdd + m.yAdjust)
+func NewMap(name string) (*Map, error) {
+	switch name {
+	case "Ascent":
+		return NewAscent(), nil
+	case "Bind":
+		return NewBind(), nil
+	case "Breeze":
+		return NewBreeze(), nil
+	case "Fracture":
+		return NewFracture(), nil
+	case "Haven":
+		return NewHaven(), nil
+	case "Icebox":
+		return NewIcebox(), nil
+	case "Split":
+		return NewSplit(), nil
+	default:
+		return nil, fmt.Errorf("map not supported: %v", name)
+	}
+}
+
+func (m *Map) Scale(width, height, rx, ry int) (float64, float64) {
+	x := float64(rx)*m.xMultiplier + m.xScalarToAdd + m.xAdjust
+	y := 1 - (float64(ry)*m.yMultiplier + m.yScalarToAdd + m.yAdjust)
 	return float64(width) * x, float64(height) * y
 }
 

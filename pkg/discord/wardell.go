@@ -85,28 +85,40 @@ func (w *Wardell) messageCreate(s *discordgo.Session, m *discordgo.MessageCreate
 				w.s.ChannelMessageSend(m.ChannelID, usageText)
 				return
 			}
-			name, tag := parseNameTag(cmdSlice[1])
+			name, tag, err := parseNameTag(cmdSlice[1])
+			if err != nil {
+				log.Println(cmdSlice, err)
+				return
+			}
 			message, err := w.elo(name, tag)
 			if err != nil {
 				log.Println(cmdSlice, err)
+				return
 			}
 			_, err = w.s.ChannelMessageSend(m.ChannelID, message)
 			if err != nil {
 				log.Println(message, err)
+				return
 			}
 		case "history":
 			if len(cmdSlice) < 2 {
 				w.s.ChannelMessageSend(m.ChannelID, usageText)
 				return
 			}
-			name, tag := parseNameTag(cmdSlice[1])
+			name, tag, err := parseNameTag(cmdSlice[1])
+			if err != nil {
+				log.Println(cmdSlice, err)
+				return
+			}
 			message, err := w.history(name, tag)
 			if err != nil {
 				log.Println(cmdSlice, err)
+				return
 			}
 			_, err = w.s.ChannelMessageSend(m.ChannelID, message)
 			if err != nil {
 				log.Println(message, err)
+				return
 			}
 		case "killmap":
 			log.Println("killmap of", cmdSlice)
@@ -118,19 +130,23 @@ func (w *Wardell) messageCreate(s *discordgo.Session, m *discordgo.MessageCreate
 			filename, err := w.createKillMap(matchID)
 			if err != nil {
 				log.Println(cmdSlice, err)
+				return
 			}
 			f, err := os.Open(filename)
 			if err != nil {
 				log.Println(cmdSlice, err)
+				return
 			}
 			_, err = w.s.ChannelFileSend(m.ChannelID, cmdSlice[1]+".png", f)
 			if err != nil {
 				log.Println(cmdSlice, err)
+				return
 			}
 		default:
 			_, err := w.s.ChannelMessageSend(m.ChannelID, usageText)
 			if err != nil {
 				log.Println(m, err)
+				return
 			}
 		}
 	}
@@ -145,15 +161,17 @@ func (w *Wardell) elo(name, tag string) (string, error) {
 	return jsonutil.FormatJSON(mmr.CurrentData, true)
 }
 
-func parseNameTag(nameTag string) (string, string) {
+func parseNameTag(nameTag string) (string, string, error) {
 	s := strings.Split(nameTag, "#")
-	return s[0], s[1]
+	if len(s) < 2 {
+		return "", "", fmt.Errorf("failed to parse: ", nameTag)
+	}
+	return s[0], s[1], nil
 }
 
 func (w *Wardell) history(name, tag string) (string, error) {
 	log.Println("History of", name+"#"+tag)
-	// history, err := w.p.GetMatchHistory("ap", name, tag, "competitive")
-	history, err := w.p.GetMatchHistory("ap", name, tag, "")
+	history, err := w.p.GetMatchHistory("ap", name, tag, "competitive")
 	if err != nil {
 		return "", err
 	}
@@ -192,37 +210,26 @@ func (w *Wardell) createKillMap(matchID string) (string, error) {
 	if err != nil {
 		return "something went wrong", err
 	}
-	var m *entities.Map
-	switch match.Metadata.Map {
-	case "Ascent":
-		m = entities.NewAscent()
-	case "Haven":
-		m = entities.NewHaven()
-	case "Split":
-		m = entities.NewSplit()
-	case "Breeze":
-		m = entities.NewBreeze()
-	case "Bind":
-		m = entities.NewBind()
-	case "Icebox":
-		m = entities.NewIcebox()
-	case "Fracture":
-		m = entities.NewFracture()
-	default:
-		return "not supported!", fmt.Errorf("map not supported")
+	m, err := entities.NewMap(match.Metadata.Map)
+	if err != nil {
+		return "", err
 	}
-	visualizer := view.NewMapVisualizer(m)
-
+	visualizer, err := view.NewMapVisualizer(m)
+	if err != nil {
+		return "", err
+	}
 	for _, round := range match.Rounds {
 		for _, status := range round.PlayerStats {
 			for _, event := range status.KillEvents {
 				victimLocation := event.VictimDeathLocation
+				vx, vy := visualizer.Scale(victimLocation.X, victimLocation.Y)
 				killerLocation := event.FindKillerLocation()
-				visualizer.DrawCircle(float64(victimLocation.X), float64(victimLocation.Y), 3, 1, 0, 0)
+				kx, ky := visualizer.Scale(killerLocation.X, killerLocation.Y)
+				visualizer.DrawCircle(vx, vy, 3, 1, 0, 0)
 				// will be nil in DeathMatch
 				if killerLocation != nil {
-					visualizer.DrawCircle(float64(killerLocation.X), float64(killerLocation.Y), 3, 0, 0, 1)
-					visualizer.DrawLine(float64(victimLocation.X), float64(victimLocation.Y), float64(killerLocation.X), float64(killerLocation.Y), 2, 0, 0.5, 0.5)
+					visualizer.DrawCircle(kx, ky, 3, 0, 0, 1)
+					visualizer.DrawLine(vx, vy, kx, ky, 2, 0, 0.5, 0.5)
 				} else {
 					_, err := jsonutil.FormatJSON(event, true)
 					if err != nil {
