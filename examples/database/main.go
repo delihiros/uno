@@ -1,12 +1,14 @@
 package main
 
 import (
+	"log"
+
 	"github.com/delihiros/uno/pkg/database"
 	"github.com/delihiros/uno/pkg/jsonutil"
 )
 
 func main() {
-	db, err := database.New()
+	db, err := database.Get()
 	if err != nil {
 		panic(err)
 	}
@@ -17,4 +19,5 @@ func main() {
 	for _, m := range ms {
 		jsonutil.PrintJSON(m.Metadata, false)
 	}
+	log.Println(len(ms))
 }

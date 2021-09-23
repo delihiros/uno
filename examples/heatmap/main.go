@@ -23,7 +23,7 @@ func main() {
 	}
 	hm := maps.NewHeatMap(8, mv.Width, mv.Height)
 
-	db, err := database.New()
+	db, err := database.Get()
 	if err != nil {
 		panic(err)
 	}

@@ -24,7 +24,7 @@ func main() {
 		panic(err)
 	}
 
-	db, err := database.New()
+	db, err := database.Get()
 	if err != nil {
 		panic(err)
 	}

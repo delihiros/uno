@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/gob"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/delihiros/uno/pkg/entities"
@@ -16,6 +17,8 @@ var (
 	matchDirectory    = filepath.FromSlash(databaseDirectory + "/matches")
 	contentDirectory  = filepath.FromSlash(databaseDirectory + "/content")
 	weaponDirectory   = filepath.FromSlash(databaseDirectory + "/weapons")
+	db                *Database
+	gen               sync.Once
 )
 
 type Database struct {
@@ -24,7 +27,16 @@ type Database struct {
 	weapon  *badger.DB
 }
 
-func New() (*Database, error) {
+func Get() (*Database, error) {
+	var err error
+	err = nil
+	gen.Do(func() {
+		db, err = new()
+	})
+	return db, err
+}
+
+func new() (*Database, error) {
 	match, err := badger.Open(badger.DefaultOptions(matchDirectory))
 	if err != nil {
 		return nil, err

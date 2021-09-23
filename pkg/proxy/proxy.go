@@ -12,7 +12,7 @@ type Proxy struct {
 }
 
 func New() (*Proxy, error) {
-	db, err := database.New()
+	db, err := database.Get()
 	if err != nil {
 		return nil, err
 	}
@@ -48,6 +48,20 @@ func (p *Proxy) GetContent() (*entities.Content, error) {
 
 func (p *Proxy) GetMatchHistory(region string, name string, tag string, filter string) ([]*entities.Match, error) {
 	matches, err := p.Client.GetMatchHistory(region, name, tag, filter)
+	if err != nil {
+		return nil, err
+	}
+	for _, m := range matches {
+		err = p.db.SetMatch(m)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return matches, nil
+}
+
+func (p *Proxy) GetMatchHistoryByPUUID(region string, puuid string, filter string) ([]*entities.Match, error) {
+	matches, err := p.Client.GetMatchHistoryByPUUID(region, puuid, filter)
 	if err != nil {
 		return nil, err
 	}
