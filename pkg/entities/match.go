@@ -55,3 +55,19 @@ func (m *Match) NameTag(puuid string) (string, string, error) {
 	}
 	return "", "", fmt.Errorf("could not find player")
 }
+
+func (m *Match) AttackerOf(round int) string {
+	if round < 12 {
+		return "Red"
+	} else {
+		return "Blue"
+	}
+}
+
+func (m *Match) DefenderOf(round int) string {
+	if round < 12 {
+		return "Blue"
+	} else {
+		return "Red"
+	}
+}

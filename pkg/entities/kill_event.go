@@ -16,7 +16,7 @@ type KillEvent struct {
 	Assistants            []Assistant      `json:"assistants"`
 }
 
-func (e KillEvent) FindKillerLocation() *Location {
+func (e *KillEvent) FindKillerLocation() *Location {
 	killer := e.KillerPuuid
 	for _, loc := range e.PlayerLocationsOnKill {
 		if loc.PlayerPuuid == killer {
@@ -24,4 +24,8 @@ func (e KillEvent) FindKillerLocation() *Location {
 		}
 	}
 	return nil
+}
+
+func (e *KillEvent) Equals(v *KillEvent) bool {
+	return e.KillerPuuid == v.KillerPuuid && e.VictimPuuid == v.VictimPuuid && e.KillTimeInRound == v.KillTimeInRound
 }

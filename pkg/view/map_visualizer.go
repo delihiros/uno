@@ -15,7 +15,7 @@ type MapVisualizer struct {
 }
 
 func NewMapVisualizer(m *entities.Map) (*MapVisualizer, error) {
-	img, err := gg.LoadPNG("assets/img/ascent_cw.png")
+	img, err := gg.LoadPNG(m.ImageURL)
 	if err != nil {
 		return nil, fmt.Errorf("could not find image")
 	}

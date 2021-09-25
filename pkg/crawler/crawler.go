@@ -28,11 +28,11 @@ func (c *Crawler) CrawlHistoryByPUUID(region, puuid string, depth int) error {
 	if depth == 0 || c.alreadyVisited(puuid) {
 		return nil
 	}
-	c.visit(puuid)
 	matches, err := c.p.GetMatchHistoryByPUUID(region, puuid, "competitive")
 	if err != nil {
 		return err
 	}
+	c.visit(puuid)
 	for _, m := range matches {
 		for _, p := range m.Players.AllPlayers {
 			err = c.CrawlHistoryByPUUID(region, p.Puuid, depth-1)

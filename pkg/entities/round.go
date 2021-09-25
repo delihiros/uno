@@ -1,5 +1,10 @@
 package entities
 
+import (
+	"reflect"
+	"sort"
+)
+
 type Round struct {
 	WinningTeam string `json:"winning_team"`
 	EndType     string `json:"end_type"`
@@ -22,4 +27,29 @@ type Round struct {
 		PlayerLocationsOnDefuse []PlayerLocation `json:"player_locations_on_defuse"`
 	} `json:"defuse_events"`
 	PlayerStats []PlayerStatus `json:"player_stats"`
+}
+
+func (r *Round) KillEvents() ([]*KillEvent, error) {
+	events := []*KillEvent{}
+	for _, s := range r.PlayerStats {
+		for _, e := range s.KillEvents {
+			exists := false
+			for _, f := range events {
+				if e.Equals(f) {
+					exists = true
+				}
+			}
+			if !exists {
+				events = append(events, &e)
+			}
+		}
+	}
+	sort.Slice(events, func(i, j int) bool {
+		return events[i].KillTimeInRound < events[j].KillTimeInRound
+	})
+	return events, nil
+}
+
+func (r *Round) Equals(v *Round) bool {
+	return reflect.DeepEqual(r, v)
 }
