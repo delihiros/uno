@@ -2,6 +2,7 @@ package entities
 
 import (
 	"fmt"
+	"math"
 )
 
 type Match struct {
@@ -54,6 +55,28 @@ func (m *Match) NameTag(puuid string) (string, string, error) {
 		}
 	}
 	return "", "", fmt.Errorf("could not find player")
+}
+
+func (m *Match) TierOf(team string) (float64, float64, float64) {
+	var players []Player
+	max, min, average := float64(math.MinInt), float64(math.MaxInt), 0.0
+	if team == "Red" {
+		players = m.Players.Red
+	} else {
+		players = m.Players.Blue
+	}
+	for _, player := range players {
+		max = math.Max(max, float64(player.Currenttier))
+		min = math.Min(min, float64(player.Currenttier))
+		average += float64(player.Currenttier)
+	}
+	return average / float64(len(players)), max, min
+}
+
+func (m *Match) Tier() (float64, float64, float64) {
+	rA, rMax, rMin := m.TierOf("Red")
+	bA, bMax, bMin := m.TierOf("Blue")
+	return (rA + bA) / 2.0, math.Max(rMax, bMax), math.Min(rMin, bMin)
 }
 
 func (m *Match) AttackerOf(round int) string {
