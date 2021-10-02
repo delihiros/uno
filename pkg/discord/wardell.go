@@ -226,17 +226,16 @@ func (w *Wardell) createKillMap(matchID string) (string, error) {
 			for _, event := range status.KillEvents {
 				victimLocation := event.VictimDeathLocation
 				vx, vy := visualizer.Scale(victimLocation.X, victimLocation.Y)
-				killerLocation := event.FindKillerLocation()
-				kx, ky := visualizer.Scale(killerLocation.X, killerLocation.Y)
-				visualizer.DrawCircle(vx, vy, 3, 1, 0, 0)
-				// will be nil in DeathMatch
-				if killerLocation != nil {
+				killerLocation, err := event.FindKillerLocation()
+				if err == nil {
+					kx, ky := visualizer.Scale(killerLocation.X, killerLocation.Y)
+					visualizer.DrawCircle(vx, vy, 3, 1, 0, 0)
 					visualizer.DrawCircle(kx, ky, 3, 0, 0, 1)
 					visualizer.DrawLine(vx, vy, kx, ky, 2, 0, 0.5, 0.5)
 				} else {
 					_, err := jsonutil.FormatJSON(event, true)
 					if err != nil {
-						panic(err)
+						log.Println(err)
 					}
 				}
 			}
