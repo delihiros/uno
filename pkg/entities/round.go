@@ -37,6 +37,7 @@ func (r *Round) KillEvents() ([]*KillEvent, error) {
 			for _, f := range events {
 				if e.Equals(f) {
 					exists = true
+					break
 				}
 			}
 			if !exists {

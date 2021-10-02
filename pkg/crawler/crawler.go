@@ -7,13 +7,18 @@ import (
 	"github.com/delihiros/uno/pkg/proxy"
 )
 
+const (
+	databaseURL = "http://localhost"
+	port        = 8080
+)
+
 type Crawler struct {
 	p       *proxy.Proxy
 	visited map[string]bool
 }
 
 func New() (*Crawler, error) {
-	p, err := proxy.New()
+	p, err := proxy.New(databaseURL, port)
 	if err != nil {
 		return nil, err
 	}

@@ -11,8 +11,8 @@ type Proxy struct {
 	db *database.Database
 }
 
-func New() (*Proxy, error) {
-	db, err := database.Get()
+func New(databaseURL string, port int) (*Proxy, error) {
+	db, err := database.Get(databaseURL, port)
 	if err != nil {
 		return nil, err
 	}
@@ -91,4 +91,20 @@ func (p *Proxy) GetWeapon(uuid string) (*entities.Weapon, error) {
 	} else {
 		return weapon, nil
 	}
+}
+
+func (p *Proxy) ListSavedMatch() ([]*entities.Match, error) {
+	ids, err := p.db.ListMatch()
+	if err != nil {
+		return nil, err
+	}
+	matches := []*entities.Match{}
+	for _, id := range ids {
+		match, err := p.db.Match(id)
+		if err != nil {
+			return nil, err
+		}
+		matches = append(matches, match)
+	}
+	return matches, nil
 }

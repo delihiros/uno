@@ -1,5 +1,7 @@
 package entities
 
+import "fmt"
+
 type KillEvent struct {
 	KillTimeInRound       int              `json:"kill_time_in_round"`
 	KillTimeInMatch       int              `json:"kill_time_in_match"`
@@ -16,14 +18,14 @@ type KillEvent struct {
 	Assistants            []Assistant      `json:"assistants"`
 }
 
-func (e *KillEvent) FindKillerLocation() *Location {
+func (e *KillEvent) FindKillerLocation() (*Location, error) {
 	killer := e.KillerPuuid
 	for _, loc := range e.PlayerLocationsOnKill {
 		if loc.PlayerPuuid == killer {
-			return &loc.Location
+			return &loc.Location, nil
 		}
 	}
-	return nil
+	return nil, fmt.Errorf("could not find killer")
 }
 
 func (e *KillEvent) Equals(v *KillEvent) bool {

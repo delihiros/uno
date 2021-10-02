@@ -30,3 +30,12 @@ func (g *Grid) SetEdge(e *Edge) {
 	}
 	g.To = append(g.To, e)
 }
+
+func (g *Grid) GetEdge(x, y int) *Edge {
+	for _, e := range g.To {
+		if e.To.X == x && e.To.Y == y {
+			return e
+		}
+	}
+	return nil
+}

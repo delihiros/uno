@@ -21,6 +21,9 @@ import (
 )
 
 var (
+	databaseURL = "http://localhost"
+	port        = 8080
+
 	usageText = `Usage: !wardell|:wardell:|@wardell [cmd]
 supporting cmd:
   elo playername#tagLine
@@ -35,7 +38,7 @@ type Wardell struct {
 }
 
 func New(token string) (*Wardell, error) {
-	p, err := proxy.New()
+	p, err := proxy.New(databaseURL, port)
 	if err != nil {
 		return nil, err
 	}

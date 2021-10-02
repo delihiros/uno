@@ -1,194 +1,130 @@
 package database
 
 import (
-	"bytes"
-	"encoding/gob"
-	"path/filepath"
+	"encoding/json"
+	"fmt"
+	"net/http"
 	"sync"
-	"time"
+
+	"github.com/delihiros/shockv/pkg/client"
 
 	"github.com/delihiros/uno/pkg/entities"
-
-	"github.com/dgraph-io/badger/v3"
+	"github.com/delihiros/uno/pkg/jsonutil"
 )
 
 var (
-	databaseDirectory = "_databases"
-	matchDirectory    = filepath.FromSlash(databaseDirectory + "/matches")
-	contentDirectory  = filepath.FromSlash(databaseDirectory + "/content")
-	weaponDirectory   = filepath.FromSlash(databaseDirectory + "/weapons")
-	db                *Database
-	gen               sync.Once
+	matches  = "matches"
+	contents = "contents"
+	weapons  = "weapons"
+	db       *Database
+	gen      sync.Once
 )
 
 type Database struct {
-	match   *badger.DB
-	content *badger.DB
-	weapon  *badger.DB
+	remote *client.Client
 }
 
-func Get() (*Database, error) {
+func Get(databaseURL string, port int) (*Database, error) {
 	var err error
 	err = nil
 	gen.Do(func() {
-		db, err = new()
+		db = _new(databaseURL, port)
 	})
 	return db, err
 }
 
-func new() (*Database, error) {
-	match, err := badger.Open(badger.DefaultOptions(matchDirectory))
-	if err != nil {
-		return nil, err
-	}
-	content, err := badger.Open(badger.DefaultOptions(contentDirectory))
-	if err != nil {
-		return nil, err
-	}
-	weapon, err := badger.Open(badger.DefaultOptions(weaponDirectory))
-	if err != nil {
-		return nil, err
-	}
+func _new(databaseURL string, port int) *Database {
 	return &Database{
-		match:   match,
-		content: content,
-		weapon:  weapon,
-	}, nil
+		remote: client.New(databaseURL, port),
+	}
 }
 
 func (db *Database) SetMatch(m *entities.Match) error {
-	id := []byte(m.Metadata.Matchid)
-	bs, err := EncodeMatch(m)
+	value, err := jsonutil.FormatJSON(m, false)
 	if err != nil {
 		return err
 	}
-	return db.match.Update(func(txn *badger.Txn) error {
-		return txn.Set(id, bs)
-	})
+	res, err := db.remote.Set(matches, m.Metadata.Matchid, value, 0)
+	if err != nil {
+		return err
+	}
+	if res.Status != http.StatusCreated {
+		return fmt.Errorf(res.Message)
+	}
+	return nil
 }
 
-func (db *Database) ListMatch() ([]*entities.Match, error) {
-	var ms []*entities.Match
-	err := db.match.View(func(txn *badger.Txn) error {
-		opts := badger.DefaultIteratorOptions
-		it := txn.NewIterator(opts)
-		defer it.Close()
-		for it.Rewind(); it.Valid(); it.Next() {
-			item := it.Item()
-			item.Value(func(val []byte) error {
-				m, err := DecodeMatch(val)
-				if err != nil {
-					return err
-				}
-				ms = append(ms, m)
-				return nil
-			})
-		}
-		return nil
-	})
+func (db *Database) ListMatch() ([]string, error) {
+	res, err := db.remote.List(matches)
 	if err != nil {
 		return nil, err
 	}
-	return ms, nil
+	if res.Status != http.StatusOK {
+		return nil, fmt.Errorf(res.Message)
+	}
+	return res.Body, nil
 }
 
 func (db *Database) Match(matchID string) (*entities.Match, error) {
-	id := []byte(matchID)
-	var bs []byte
-	err := db.match.View(func(txn *badger.Txn) error {
-		item, err := txn.Get(id)
-		if err != nil {
-			return err
-		}
-		return item.Value(func(val []byte) error {
-			bs = append([]byte{}, val...)
-			return nil
-		})
-	})
+	res, err := db.remote.Get(matches, matchID)
 	if err != nil {
 		return nil, err
 	}
-	return DecodeMatch(bs)
-}
-
-func EncodeMatch(m *entities.Match) ([]byte, error) {
-	buffer := bytes.NewBuffer(nil)
-	err := gob.NewEncoder(buffer).Encode(m)
+	if res.Status != http.StatusOK {
+		return nil, fmt.Errorf(res.Message)
+	}
+	var match entities.Match
+	err = json.Unmarshal([]byte(res.Body), &match)
 	if err != nil {
 		return nil, err
 	}
-	return buffer.Bytes(), nil
-}
-
-func DecodeMatch(bs []byte) (*entities.Match, error) {
-	var m entities.Match
-	buffer := bytes.NewBuffer(bs)
-	err := gob.NewDecoder(buffer).Decode(&m)
-	if err != nil {
-		return nil, err
-	}
-	return &m, nil
+	return &match, err
 }
 
 func (db *Database) SetContent(c *entities.Content) error {
-	id := []byte("content")
-	bs, err := EncodeContent(c)
+	s, err := jsonutil.FormatJSON(c, false)
 	if err != nil {
 		return err
 	}
-	return db.content.Update(func(txn *badger.Txn) error {
-		e := badger.NewEntry(id, bs).WithTTL(24 * time.Hour)
-		return txn.SetEntry(e)
-	})
+	res, err := db.remote.Set(contents, "content", s, 24*60*60)
+	if err != nil {
+		return err
+	}
+	if res.Status != http.StatusCreated {
+		return fmt.Errorf(res.Message)
+	}
+	return nil
 }
 
 func (db *Database) Content() (*entities.Content, error) {
-	id := []byte("content")
-	var bs []byte
-	err := db.content.View(func(txn *badger.Txn) error {
-		item, err := txn.Get(id)
-		if err != nil {
-			return err
-		}
-		return item.Value(func(val []byte) error {
-			bs = append([]byte{}, val...)
-			return nil
-		})
-	})
+	res, err := db.remote.Get(contents, "content")
 	if err != nil {
 		return nil, err
 	}
-	return DecodeContent(bs)
-}
-
-func EncodeContent(c *entities.Content) ([]byte, error) {
-	buffer := bytes.NewBuffer(nil)
-	err := gob.NewEncoder(buffer).Encode(c)
+	if res.Status != http.StatusOK {
+		return nil, fmt.Errorf(res.Message)
+	}
+	var content entities.Content
+	err = json.Unmarshal([]byte(res.Body), &content)
 	if err != nil {
 		return nil, err
 	}
-	return buffer.Bytes(), nil
-}
-
-func DecodeContent(bs []byte) (*entities.Content, error) {
-	var c entities.Content
-	buffer := bytes.NewBuffer(bs)
-	err := gob.NewDecoder(buffer).Decode(&c)
-	if err != nil {
-		return nil, err
-	}
-	return &c, nil
+	return &content, nil
 }
 
 func (db *Database) SetWeapon(w *entities.Weapon) error {
-	id := []byte(w.UUID)
-	bs, err := EncodeWeapon(w)
+	s, err := jsonutil.FormatJSON(w, false)
 	if err != nil {
 		return err
 	}
-	return db.weapon.Update(func(txn *badger.Txn) error {
-		return txn.Set(id, bs)
-	})
+	res, err := db.remote.Set(weapons, w.UUID, s, 0)
+	if err != nil {
+		return err
+	}
+	if res.Status != http.StatusCreated {
+		return fmt.Errorf(res.Message)
+	}
+	return nil
 }
 
 func (db *Database) Weapon(uuid string) (*entities.Weapon, error) {
@@ -204,39 +140,17 @@ func (db *Database) Weapon(uuid string) (*entities.Weapon, error) {
 			DisplayName: "Spike",
 		}, nil
 	}
-	id := []byte(uuid)
-	var bs []byte
-	err := db.weapon.View(func(txn *badger.Txn) error {
-		item, err := txn.Get(id)
-		if err != nil {
-			return err
-		}
-		return item.Value(func(val []byte) error {
-			bs = append([]byte{}, val...)
-			return nil
-		})
-	})
+	res, err := db.remote.Get(weapons, uuid)
 	if err != nil {
 		return nil, err
 	}
-	return DecodeWeapon(bs)
-}
-
-func EncodeWeapon(w *entities.Weapon) ([]byte, error) {
-	buffer := bytes.NewBuffer(nil)
-	err := gob.NewEncoder(buffer).Encode(w)
+	if res.Status != http.StatusOK {
+		return nil, fmt.Errorf(res.Message)
+	}
+	var weapon entities.Weapon
+	err = json.Unmarshal([]byte(res.Body), &weapon)
 	if err != nil {
 		return nil, err
 	}
-	return buffer.Bytes(), nil
-}
-
-func DecodeWeapon(bs []byte) (*entities.Weapon, error) {
-	var w entities.Weapon
-	buffer := bytes.NewBuffer(bs)
-	err := gob.NewDecoder(buffer).Decode(&w)
-	if err != nil {
-		return nil, err
-	}
-	return &w, nil
+	return &weapon, nil
 }

@@ -1,21 +1,35 @@
 package main
 
 import (
-	"io/ioutil"
 	"log"
+
+	"github.com/delihiros/shockv/pkg/client"
 
 	"github.com/delihiros/uno/pkg/entities"
 
 	"github.com/delihiros/uno/pkg/database"
-	"github.com/delihiros/uno/pkg/jsonutil"
+)
+
+const (
+	databaseURL = "http://localhost"
+	port        = 8080
 )
 
 func main() {
-	JustCount()
+	CountMap()
+}
+
+func RemoteList() {
+	c := client.New("http://localhost", 8080)
+	ids, err := c.List("matches")
+	if err != nil {
+		panic(err)
+	}
+	log.Println(ids)
 }
 
 func JustCount() {
-	db, err := database.Get()
+	db, err := database.Get(databaseURL, port)
 	if err != nil {
 		panic(err)
 	}
@@ -23,14 +37,11 @@ func JustCount() {
 	if err != nil {
 		panic(err)
 	}
-	for _, m := range ms {
-		jsonutil.PrintJSON(m.Metadata, false)
-	}
 	log.Println(len(ms))
 }
 
 func CountMap() {
-	db, err := database.Get()
+	db, err := database.Get(databaseURL, port)
 	if err != nil {
 		panic(err)
 	}
@@ -39,7 +50,11 @@ func CountMap() {
 		panic(err)
 	}
 	maps := map[string][]*entities.Match{}
-	for _, m := range ms {
+	for _, mID := range ms {
+		m, err := db.Match(mID)
+		if err != nil {
+			panic(err)
+		}
 		_, ok := maps[m.Metadata.Map]
 		if !ok {
 			maps[m.Metadata.Map] = []*entities.Match{}
@@ -48,24 +63,5 @@ func CountMap() {
 	}
 	for k, v := range maps {
 		log.Println(k, len(v))
-	}
-}
-
-func GenerateMatchJSON() {
-	db, err := database.Get()
-	if err != nil {
-		panic(err)
-	}
-	ms, err := db.ListMatch()
-	if err != nil {
-		panic(err)
-	}
-	txt, err := jsonutil.FormatJSON(ms, true)
-	if err != nil {
-		panic(err)
-	}
-	err = ioutil.WriteFile("matches.json", []byte(txt), 0666)
-	if err != nil {
-		panic(err)
 	}
 }

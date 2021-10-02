@@ -1,0 +1,40 @@
+<html>
+<head>
+    <script>
+        window.onload = () => {
+            const board = document.querySelector("#map")
+            const ctx = board.getContext("2d")
+
+            board.addEventListener('mousedown', (e) => {
+                getCursorPosition(board, e)
+            })
+
+            const mapImage = new Image()
+            mapImage.onload = () => {
+                ctx.drawImage(mapImage, 0, 0)
+            }
+            mapImage.src = "images/ascent_cw.png"
+
+
+            const getCursorPosition = (board, event) => {
+                const rect = board.getBoundingClientRect()
+                const x = event.clientX - rect.left
+                const y = event.clientY - rect.top
+                fetch('http://localhost:1234/heatmap?map=Ascent&x='+x.toString()+'&y='+y.toString(), {
+                }).then(res => {
+                    return res.json()
+                }).then(data => {
+                    let ctx = board.getContext("2d")
+                    ctx.fillRect(data.grid_pointed.location.x, data.grid_pointed.location.y, 4, 4)
+                    for (var i = 0; i<data.grids.length; i++) {
+                        ctx.strokeRect(data.grids[i].to.x, data.grids[i].to.y, 4, 4)
+                    }
+                })
+            }
+        }
+    </script>
+</head>
+<body>
+<canvas id="map" width="1200" height="1200"></canvas>
+</body>
+</html>
