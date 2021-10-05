@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"regexp"
+	"strconv"
 	"strings"
 	"syscall"
 
@@ -21,7 +22,7 @@ import (
 )
 
 var (
-	databaseURL = "http://localhost"
+	databaseURL = "http://192.168.0.140"
 	port        = 8080
 
 	usageText = `Usage: !wardell|:wardell:|@wardell [cmd]
@@ -156,12 +157,73 @@ func (w *Wardell) messageCreate(s *discordgo.Session, m *discordgo.MessageCreate
 }
 
 func (w *Wardell) elo(name, tag string) (string, error) {
-	log.Println("Elo of", name, tag)
-	mmr, err := w.p.GetMMRDataByNameTag("ap", name, tag)
+	log.Println("Elo: ", name, tag)
+	history, err := w.p.GetMatchHistory("ap", name, tag, "competitive")
 	if err != nil {
 		return "", err
 	}
-	return jsonutil.FormatJSON(mmr.CurrentData, true)
+	elos := 0.0
+	for _, m := range history{
+		os := 0.0
+		missingO := 0
+		as := 0.0
+		missingA := 0
+		player, err := m.FindPlayer(name, tag)
+		if err != nil {
+			return "", err
+		}
+		if player.Team == "Red" {
+			for _, opponent := range m.Players.Blue {
+				mmr, err := w.p.GetMMRDataByPUUID("ap", opponent.Puuid)
+				if err != nil {
+					missingO += 1
+				} else {
+					os += float64(mmr.CurrentData.Elo)
+				}
+			}
+			for _, allies := range m.Players.Red {
+				if player.Puuid != allies.Puuid {
+					mmr, err := w.p.GetMMRDataByPUUID("ap", allies.Puuid)
+					if err != nil {
+						missingA += 1
+					} else {
+						as += float64(mmr.CurrentData.Elo)
+					}
+				}
+			}
+		} else {
+			for _, opponent := range m.Players.Red {
+				mmr, err := w.p.GetMMRDataByPUUID("ap", opponent.Puuid)
+				if err != nil {
+					missingO += 1
+				} else {
+					os += float64(mmr.CurrentData.Elo)
+				}
+			}
+			for _, allies := range m.Players.Blue {
+				if player.Puuid != allies.Puuid {
+					mmr, err := w.p.GetMMRDataByPUUID("ap", allies.Puuid)
+					if err != nil {
+						missingA += 1
+					} else {
+						as += float64(mmr.CurrentData.Elo)
+					}
+				}
+			}
+		}
+		averageO := os / float64(5 - missingO)
+		averageA := as / float64(4 - missingA)
+		os += averageO * float64(missingO)
+		as += averageA * float64(missingA)
+		log.Println(os - as)
+		elos += os - as
+	}
+	p, err := w.p.GetMMRDataByNameTag("ap", name, tag)
+	if err != nil {
+		return jsonutil.FormatJSON(elos / float64(len(history)), true)
+	}
+	return jsonutil.FormatJSON(`{"estimated": ` + strconv.Itoa(int(elos / float64(len(history)))) + `, "elo":`+ strconv.Itoa(p.CurrentData.Elo) + `}`, true)
+
 }
 
 func parseNameTag(nameTag string) (string, string, error) {
