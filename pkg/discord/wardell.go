@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/signal"
 	"regexp"
-	"strconv"
 	"strings"
 	"syscall"
 
@@ -77,6 +76,8 @@ func (w *Wardell) messageCreate(s *discordgo.Session, m *discordgo.MessageCreate
 	if w.matcher.MatchString(m.Content) {
 		cmdString := m.Content[w.matcher.FindStringIndex(m.Content)[1]:]
 		cmdString = strings.TrimSpace(cmdString)
+		space := regexp.MustCompile(`\s+`)
+		cmdString = space.ReplaceAllString(cmdString, " ")
 		cmdSlice := strings.Split(cmdString, " ")
 		switch cmdSlice[0] {
 		case "help":
@@ -94,6 +95,7 @@ func (w *Wardell) messageCreate(s *discordgo.Session, m *discordgo.MessageCreate
 				log.Println(cmdSlice, err)
 				return
 			}
+			_, err = w.s.ChannelMessageSend(m.ChannelID, "calculating elo...")
 			message, err := w.elo(name, tag)
 			if err != nil {
 				log.Println(cmdSlice, err)
@@ -163,7 +165,7 @@ func (w *Wardell) elo(name, tag string) (string, error) {
 		return "", err
 	}
 	elos := 0.0
-	for _, m := range history{
+	for _, m := range history {
 		os := 0.0
 		missingO := 0
 		as := 0.0
@@ -172,47 +174,32 @@ func (w *Wardell) elo(name, tag string) (string, error) {
 		if err != nil {
 			return "", err
 		}
+		opponentsPlayers := m.Players.Red
+		alliesPlayers := m.Players.Blue
 		if player.Team == "Red" {
-			for _, opponent := range m.Players.Blue {
-				mmr, err := w.p.GetMMRDataByPUUID("ap", opponent.Puuid)
+			opponentsPlayers = m.Players.Blue
+			alliesPlayers = m.Players.Red
+		}
+		for _, opponent := range opponentsPlayers {
+			mmr, err := w.p.GetMMRDataByPUUID("ap", opponent.Puuid)
+			if err != nil {
+				missingO += 1
+			} else {
+				os += float64(mmr.CurrentData.Elo)
+			}
+		}
+		for _, allies := range alliesPlayers {
+			if player.Puuid != allies.Puuid {
+				mmr, err := w.p.GetMMRDataByPUUID("ap", allies.Puuid)
 				if err != nil {
-					missingO += 1
+					missingA += 1
 				} else {
-					os += float64(mmr.CurrentData.Elo)
-				}
-			}
-			for _, allies := range m.Players.Red {
-				if player.Puuid != allies.Puuid {
-					mmr, err := w.p.GetMMRDataByPUUID("ap", allies.Puuid)
-					if err != nil {
-						missingA += 1
-					} else {
-						as += float64(mmr.CurrentData.Elo)
-					}
-				}
-			}
-		} else {
-			for _, opponent := range m.Players.Red {
-				mmr, err := w.p.GetMMRDataByPUUID("ap", opponent.Puuid)
-				if err != nil {
-					missingO += 1
-				} else {
-					os += float64(mmr.CurrentData.Elo)
-				}
-			}
-			for _, allies := range m.Players.Blue {
-				if player.Puuid != allies.Puuid {
-					mmr, err := w.p.GetMMRDataByPUUID("ap", allies.Puuid)
-					if err != nil {
-						missingA += 1
-					} else {
-						as += float64(mmr.CurrentData.Elo)
-					}
+					as += float64(mmr.CurrentData.Elo)
 				}
 			}
 		}
-		averageO := os / float64(5 - missingO)
-		averageA := as / float64(4 - missingA)
+		averageO := os / float64(5-missingO)
+		averageA := as / float64(4-missingA)
 		os += averageO * float64(missingO)
 		as += averageA * float64(missingA)
 		log.Println(os - as)
@@ -220,10 +207,15 @@ func (w *Wardell) elo(name, tag string) (string, error) {
 	}
 	p, err := w.p.GetMMRDataByNameTag("ap", name, tag)
 	if err != nil {
-		return jsonutil.FormatJSON(elos / float64(len(history)), true)
+		return jsonutil.FormatJSON(elos/float64(len(history)), true)
 	}
-	return jsonutil.FormatJSON(`{"estimated": ` + strconv.Itoa(int(elos / float64(len(history)))) + `, "elo":`+ strconv.Itoa(p.CurrentData.Elo) + `}`, true)
-
+	return jsonutil.FormatJSON(struct {
+		Estimated float64 `json:"estimated"`
+		Elo       int     `json:"elo"`
+	}{
+		Estimated: elos / float64(len(history)),
+		Elo:       p.CurrentData.Elo,
+	}, true)
 }
 
 func parseNameTag(nameTag string) (string, string, error) {
