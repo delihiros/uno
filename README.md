@@ -3,6 +3,10 @@
 uno is an unofficial valorant API client.
 with uno, you can examine data of valorant play history, and analyze data statistically.
 
+![death](public/img/death.png)
+
+![Haven-mostkilledfrom](public/img/Haven-mostKilledFrom.png)
+
 
 uno provides following features:
 
