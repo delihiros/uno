@@ -56,7 +56,7 @@ func (c *HenrikdevClient) get(endpoint string, queries map[string]string, v inte
 	if err != nil {
 		return err
 	}
-	if r.Status != "200" {
+	if r.Status != 200 {
 		return fmt.Errorf("failed to GET: %v, status = %v, data = %v", endpoint, r.Status, string(body))
 	}
 	return json.Unmarshal(r.Data, v)

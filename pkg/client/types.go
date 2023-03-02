@@ -3,7 +3,7 @@ package client
 import "encoding/json"
 
 type HenrikdevResponse struct {
-	Status string          `json:"status"`
+	Status int             `json:"status"`
 	Data   json.RawMessage `json:"data"`
 }
 
